@@ -1,0 +1,11 @@
+ACT DR4 CMB-only Spectra 2020
+
+The ACTPol TT, EE and TE multi-frequency power spectra are used to estimate the deep and wide CMB-only bandpowers, marginalized over astrophysical foregrounds.
+
+The deep and wide spectra are binned and co-added, and are given with the following columns:
+
+-the mean multipole moment l
+-the power spectrum in units of μK2 Dl
+-the error for the binned value in units of μK2 Dl
+
+These spectra are released for plotting purposes and do not include the full covariance. For statistical comparison to a theory Cl, the theory Cls should be convolved with bandpower window functions. Any likelihood analysis should be performed using the corresponding CMB-only likelihood provided.

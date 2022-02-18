@@ -1,0 +1,11 @@
+To include the SPTsz likelihood in your code:
+
+1) Replace your CMBlikes.f90 in source, by the provided version. This adds the Aberration correction. If you turn off aberration, the preferred peak position with shift by order 0.4 sigma, as discussed in Aylor et al.
+1b) Recompile cosmomc with the new code.
+
+2) Add sptsz_2500d_tt/ to your data folder.
+
+3) Add to your ini file for the chain: 
+DEFAULT(batch3/SPTsz_2500deg2_TT.ini)
+
+Note: These instructions assume you have the Nov'16 release of cosmomc. After Dec'17, these steps are in the master branch of cosmomc on the github repository.  You still need to include the ini file to invoke the SPT-SZ likelihood.
