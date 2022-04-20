@@ -2,6 +2,15 @@ import numpy as np
 
 cmbs = ['TT','EE','BB','TE','EB','TB','KK']
 
+# Stolen from Dominic Beck
+def binit(cl,bins):
+    nb = len(bins)-1
+    clb = np.zeros(nb)
+    for i in range(nb):
+        clb[i] = np.mean(cl[bins[i]:bins[i+1]])
+
+    return clb
+
 class Experiment(object):
     def __init__(self, telescope, exp_type, color=None):
         self.telescope = telescope
@@ -49,26 +58,45 @@ class ACTpol(Experiment):
         self.l['EE'], self.dl['EE'], self.dl_err['EE'] = np.loadtxt('data/cmbonly_spectra_dr4.01/act_dr4.01_D_ell_EE_cmbonly.txt',unpack=1)
         self.l['TE'], self.dl['TE'], self.dl_err['TE'] = np.loadtxt('data/cmbonly_spectra_dr4.01/act_dr4.01_D_ell_TE_cmbonly.txt',unpack=1)
 
-class POLARBEAR(Experiment):
-    def __init__(self, telescope, exp_type, color='#33673B'):
+class POLARBEAR17(Experiment):
+    def __init__(self, telescope='POLARBEAR', exp_type='ground', color='#33673B'):
         super().__init__(telescope, exp_type, color)
 
         self.l_lo['BB'], self.l_hi['BB'], self.l['BB'], self.dl['BB'], self.dl_err['BB'] = np.loadtxt('data/Polarbear_BB_2017.txt', unpack=1, usecols=[1,2,3,4,5])
 
-class BICEPKeck(Experiment):
-    def __init__(self, telescope, exp_type, color='#9B5DE5'):
+class POLARBEAR22(Experiment):
+    def __init__(self, telescope='POLARBEAR', exp_type='ground', color='#33673B'):
         super().__init__(telescope, exp_type, color)
 
-        self.l_, self.l_bb, self.lmax, self.dl_bb, self.dl_lo_bb, self.dl_hi_bb = np.loadtxt('data/BK18_components_20210607.txt', unpack=1, usecols=[0,1,2,3,4,5])
-        self.xerr_bb = (bk_lmax - bk_lmin)/2
-        bk_yerr_bb = [self.dl_max_bb-bk_dl_lo_bb,self.dl_hi_bb-self.dl_max_bb]
+        self.l_lo['BB'] = np.arange(50,600,50)
+        self.l_hi['BB'] = np.arange(100,650,50)
+        self.l['BB'] = 0.5*(self.l_lo['BB']+self.l_hi['BB'])
+        self.dl['BB'] = np.array([0.0249,0.0029,0.0218 ,0.0207 ,-0.0521,0.0481 ,0.0259 ,0.1016 ,-0.0376,-0.0772,0.0664 ,])
+        self.dl_err['BB'] = np.array([0.0126 ,0.0135 ,0.0207 ,0.0287 , 0.0403,0.0528 ,0.0650 ,0.0835 , 0.0912, 0.1114,0.1323 ,])
+
+class BK18(Experiment):
+    def __init__(self, telescope='BK', exp_type='ground', color='#9B5DE5'):
+        super().__init__(telescope, exp_type, color)
+
+        self.l_lo['BB'], self.l['BB'], self.l_hi['BB'], self.dl['BB'], dl_lo_bb, dl_hi_bb = np.loadtxt('data/BK18_components_20210607.txt', unpack=1, usecols=[0,1,2,3,4,5])
+        self.dl_err['BB'] = [self.dl['BB']-dl_lo_bb, dl_hi_bb-self.dl['BB']]
 
 class Planck(Experiment):
-    def __init__(self, telescope='Planck', exp_type='space', color='#137fbf'):
-        super().__init__(telescope, exp_type)
+    def __init__(self, telescope='Planck', exp_type='space', bins=np.array([2, 15, 32]), color='#137fbf'):
+        super().__init__(telescope, exp_type, color)
 
-        # self.l['TT'], self.dl['TT'], self.dl_err['TT'] = np.loadtxt('data/COM_PowerSpect_CMB-TT-binned_R3.01.txt', unpack=1, usecols=(0,1,2))
-        # self.l['EE'], self.dl['EE'], self.dl_err['EE'] = np.loadtxt('data/COM_PowerSpect_CMB-EE-binned_R3.02.txt', unpack=1, usecols=(0,1,2))
-        self.l['BB'], self.l_lo['BB'], self.l_hi['BB'], self.dl['BB']  = np.loadtxt('data/cl_planck_lolEB_NPIPE_BB.dat.txt', unpack=1, usecols=(1,0,2,7))
-        self.l['TT']_lo, self.dl['TT']_lo, self.dl_err['TT']_lo = np.loadtxt('data/COM_PowerSpect_CMB-TT-full_R3.01.txt', unpack=1, usecols=(0,1,2))
-        self.l_ee_lo, self.dl_ee_lo, self.dl_err_ee_lo = np.loadtxt('data/COM_PowerSpect_CMB-EE-full_R3.01.txt', unpack=1, usecols=(0,1,2))
+        # For binning the Planck l-by-l low-l spectra
+        self.bins = bins
+
+        self.l['TT'], self.dl['TT'], self.dl_err['TT'] = np.loadtxt('data/COM_PowerSpect_CMB-TT-binned_R3.01.txt', unpack=1, usecols=(0,1,2))
+        self.l['EE'], self.dl['EE'], self.dl_err['EE'] = np.loadtxt('data/COM_PowerSpect_CMB-EE-binned_R3.02.txt', unpack=1, usecols=(0, 1, 2))
+        # self.l['BB'], self.l_lo['BB'], self.l_hi['BB'], self.dl['BB'] = np.loadtxt('data/cl_planck_lolEB_NPIPE_BB.dat.txt', unpack=1, usecols=(1, 0, 2, 7))
+        planck_l_tt_lo, planck_dl_tt_lo, planck_dl_err_tt_lo = np.loadtxt('data/COM_PowerSpect_CMB-TT-full_R3.01.txt', unpack=1, usecols=(0,1,2))
+        planck_l_ee_lo, planck_dl_ee_lo, planck_dl_err_ee_lo = np.loadtxt('data/COM_PowerSpect_CMB-EE-full_R3.01.txt', unpack=1, usecols=(0,1,2))
+
+        self.l['TT'] = np.insert(self.l['TT'], 0, planck_l_tt_lo[:25])
+        self.dl['TT'] = np.insert(self.dl['TT'], 0, planck_dl_tt_lo[:25])
+        self.dl_err['TT'] = np.insert(self.dl_err['TT'], 0, planck_dl_err_tt_lo[:25])
+        self.l['EE'] = np.insert(self.l['EE'], 0, binit(planck_l_ee_lo, self.bins))
+        self.dl['EE'] = np.insert(self.dl['EE'], 0, binit(planck_dl_ee_lo, self.bins))
+        self.dl_err['EE'] = np.insert(self.dl_err['EE'], 0, binit(planck_dl_err_ee_lo, self.bins))
