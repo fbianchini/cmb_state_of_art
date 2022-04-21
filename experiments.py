@@ -88,7 +88,8 @@ class Planck(Experiment):
 
         self.l['TT'], self.dl['TT'], self.dl_err['TT'] = np.loadtxt('data/COM_PowerSpect_CMB-TT-binned_R3.01.txt', unpack=1, usecols=(0,1,2))
         self.l['EE'], self.dl['EE'], self.dl_err['EE'] = np.loadtxt('data/COM_PowerSpect_CMB-EE-binned_R3.02.txt', unpack=1, usecols=(0, 1, 2))
-        # self.l['BB'], self.l_lo['BB'], self.l_hi['BB'], self.dl['BB'] = np.loadtxt('data/cl_planck_lolEB_NPIPE_BB.dat.txt', unpack=1, usecols=(1, 0, 2, 7))
+        self.l['TE'], self.dl['TE'], self.dl_err['TE'] = np.loadtxt('data/COM_PowerSpect_CMB-TE-binned_R3.02.txt', unpack=1, usecols=(0, 1, 2))
+        self.l['BB'], self.l_lo['BB'], self.l_hi['BB'], self.dl['BB'] = np.loadtxt('data/cl_planck_lolEB_NPIPE_BB.dat.txt', unpack=1, usecols=(1, 0, 2, 7))
         planck_l_tt_lo, planck_dl_tt_lo, planck_dl_err_tt_lo = np.loadtxt('data/COM_PowerSpect_CMB-TT-full_R3.01.txt', unpack=1, usecols=(0,1,2))
         planck_l_ee_lo, planck_dl_ee_lo, planck_dl_err_ee_lo = np.loadtxt('data/COM_PowerSpect_CMB-EE-full_R3.01.txt', unpack=1, usecols=(0,1,2))
 
