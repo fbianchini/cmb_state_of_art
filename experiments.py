@@ -46,7 +46,6 @@ class SPT3G(Experiment):
     def __init__(self, telescope='SPT', exp_type='ground', color='#e26813'):
         super().__init__(telescope, exp_type, color)
 
-        self.l['TT'], _, self.dl_err['TT'] = np.loadtxt('data/bandpowers_spt2500deg2_lps12.txt', unpack=1)
         self.l_lo['TE'], self.l_hi['TE'], self.l['TE'], self.dl['TE'], self.dl_err['TE'] = np.loadtxt('data/bp_for_plotting_v3.txt', unpack=1, usecols=[0,1,2,3,4])
         self.l_lo['EE'], self.l_hi['EE'], self.l['EE'], self.dl['EE'], self.dl_err['EE'] = np.loadtxt('data/bp_for_plotting_v3.txt', unpack=1, usecols=[0,1,5,6,7])
         
@@ -54,9 +53,8 @@ class ACTpol(Experiment):
     def __init__(self, telescope='ACT', exp_type='ground', color='#b3074f'):
         super().__init__(telescope, exp_type, color)
 
-        self.l['TT'], self.dl['TT'], self.dl_err['TT'] = np.loadtxt('data/cmbonly_spectra_dr4.01/act_dr4.01_D_ell_TT_cmbonly.txt',unpack=1)
-        self.l['EE'], self.dl['EE'], self.dl_err['EE'] = np.loadtxt('data/cmbonly_spectra_dr4.01/act_dr4.01_D_ell_EE_cmbonly.txt',unpack=1)
-        self.l['TE'], self.dl['TE'], self.dl_err['TE'] = np.loadtxt('data/cmbonly_spectra_dr4.01/act_dr4.01_D_ell_TE_cmbonly.txt',unpack=1)
+        for cmb in ['TT','EE','TE']:
+            self.l[cmb], self.dl[cmb], self.dl_err[cmb] = np.loadtxt('data/cmbonly_spectra_dr4.01/act_dr4.01_D_ell_%s_cmbonly.txt'%cmb,unpack=1)
 
 class POLARBEAR17(Experiment):
     def __init__(self, telescope='POLARBEAR', exp_type='ground', color='#33673B'):
