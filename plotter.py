@@ -34,6 +34,7 @@ def make_plot(exps, cmbs=['TT','EE','BB'],
               nsigma={'TT':2,'EE':2,'BB':3,'TE':0}, sigma_det={'%s'%cmb:1 for cmb in experiments.cmbs}, 
               theory='camb',
               lsep=200, datams=4, upperlimitms=4, error_lw=0.5, txtsize=12,
+              plot_xerr = False,
               theorycolor={'%s'%cmb:'grey' for cmb in experiments.cmbs}, 
               theorylw={'%s'%cmb:0.7 for cmb in experiments.cmbs}, 
               theoryls={'%s'%cmb:'-' for cmb in experiments.cmbs}, 
@@ -44,7 +45,7 @@ def make_plot(exps, cmbs=['TT','EE','BB'],
     lmin = kwargs.get('lmin', 2)
     lmax = kwargs.get('lmax', 3000)
 
-    assert(lmin<lsep)
+    if lsep is not None: assert(lmin<lsep)
     
     # Get a list of all the experiments in experiments.py
     all_exps = {}
@@ -90,7 +91,8 @@ def make_plot(exps, cmbs=['TT','EE','BB'],
     if theory == 'camb':
         try:
             import camb
-            pars = camb.CAMBparams()
+            pars = camb.CAMBparams(max_l_tensor=kwargs.get('max_l_tensor',10000), 
+                                   max_eta_k_tensor=kwargs.get('max_eta_k_tensor',25000))
 
             # Some Planck2018 best-fit cosmology
             pars.set_cosmology(H0=kwargs.get('H0', 67.32117), 
@@ -104,9 +106,11 @@ def make_plot(exps, cmbs=['TT','EE','BB'],
             pars.WantTensors = True
             pars.InitPower.set_params(As=kwargs.get('As',2.100549e-9), 
                                     ns=kwargs.get('ns',0.9660499), 
-                                    r=kwargs.get('r',0.01)
+                                    r=kwargs.get('r',1),
+                                    nt=kwargs.get('nt',0)
                                     )
-            pars.set_for_lmax(kwargs.get('lmax',5000)+500, lens_potential_accuracy=kwargs.get('lens_potential_accuracy',1))
+            pars.set_for_lmax(kwargs.get('lmax',10000)+500,
+                    lens_potential_accuracy=kwargs.get('lens_potential_accuracy',2))
             results = camb.get_results(pars)
             powers = results.get_cmb_power_spectra(pars, CMB_unit='muK')
 
@@ -128,46 +132,70 @@ def make_plot(exps, cmbs=['TT','EE','BB'],
     
     axR.set_xscale(xscaleR)
     axR.set_yscale(yscale)
-    axR.set_xlim((lsep, lmax))
+    axR.set_xlim([lmin, lmax])
     axR.set_ylim(ylim)
-    axR.yaxis.set_ticks_position('right')
-    axR.yaxis.set_visible(False)
-    axR.spines['left'].set_visible(False)
+    axR.set_ylabel(r'Power $\frac{\ell(\ell+1)}{2\pi}C_{\ell}$ [$\mu K^2$]', size=15)
+    xlab_pos = (0.5, -0.01)
     # axR.xaxis.set_major_formatter(FormatStrFormatter("%g"))
     
-    divider = make_axes_locatable(axR)
-    axL = divider.append_axes("left", size=2.0, pad=0, sharey=axR)
-    axL.set_xscale(xscaleL)
-    axL.set_yscale(yscale)
-    axL.set_xlim((lmin, lsep))
-    axL.spines['right'].set_visible(False)
-    # y_minor = LogLocator(base=10.0, subs=np.arange(1.0, 10.0) *10, numticks=10)
-    # axR.yaxis.set_minor_locator(y_minor)
-    axL.yaxis.set_minor_formatter(NullFormatter())
-    axL.yaxis.set_ticks_position('left')
-    axL.set_ylabel(r'Power $\frac{\ell(\ell+1)}{2\pi}C_{\ell}$ [$\mu K^2$]', size=15)
+    axlist = [axR]
 
+    def add_left_axes(axR):
+        axR.set_xlim((lsep, lmax))
+        axR.yaxis.set_ticks_position('right')
+        axR.yaxis.set_visible(False)
+        axR.spines['left'].set_visible(False)
+
+        divider = make_axes_locatable(axR)
+        axL = divider.append_axes("left", size=2.0, pad=0, sharey=axR)
+        axL.set_xscale(xscaleL)
+        axL.set_yscale(yscale)
+        axL.set_xlim((lmin, lsep))
+        axL.spines['right'].set_visible(False)
+        # y_minor = LogLocator(base=10.0, subs=np.arange(1.0, 10.0) *10, numticks=10)
+        # axR.yaxis.set_minor_locator(y_minor)
+        axL.yaxis.set_minor_formatter(NullFormatter())
+        axL.yaxis.set_ticks_position('left')
+        axR.set_ylabel(r'')
+        axL.set_ylabel(r'Power $\frac{\ell(\ell+1)}{2\pi}C_{\ell}$ [$\mu K^2$]', size=15)
+
+        return axL 
+
+    if lsep is not None:
+        axL = add_left_axes(axR)
+        axlist.append(axL)
+        xlab_pos = (1.2, -0.01)
 
     plt.annotate(kwargs.get('xlabel',r'Multipole $\ell$'), 
-                xy=(1.2, -0.01), xytext=(0, 4),
+                xy=xlab_pos, xytext=(0, 4),
                 xycoords=('axes fraction', 'figure fraction'),
                 textcoords='offset points',
                 size=labsize, ha='center', va='bottom')
+
+    def plot_on_axes(axes, x_in, y_in, **kwargs):
+        # axes is a list
+        for axis in axes:
+            axis.plot(x_in, y_in, **kwargs)
+    
+    def errorbars_on_axes(axes, x_in, y_in, **kwargs):
+        for axis in axes:
+            axis.errorbar(x_in, y_in, **kwargs)
+
     
     for cmb in np.atleast_1d(cmbs):
         
         # Plotting the theory
-        axR.plot(l_th, dl_lens[cmb], color=theorycolor[cmb], lw=theorylw[cmb], ls=theoryls[cmb])
-        axL.plot(l_th, dl_lens[cmb], color=theorycolor[cmb], lw=theorylw[cmb], ls=theoryls[cmb])
-        
+        plot_on_axes(axlist, l_th, dl_lens[cmb], color=theorycolor[cmb],
+                    lw=theorylw[cmb], ls=theoryls[cmb])
+
         if cmb.upper() == 'BB':
-            axR.plot(l_th, dl_tens[cmb], color=theorycolor[cmb], linewidth=theorylw[cmb], ls='--')        
-            axL.plot(l_th, dl_tens[cmb], color=theorycolor[cmb], linewidth=theorylw[cmb], ls='--')
-        
+            plot_on_axes(axlist, l_th, dl_tens[cmb]*0.01, color=theorycolor[cmb],
+                         linewidth=theorylw[cmb], ls='--')
+
         # Plotting the experiments
         for exp in exps_to_plot:
             exp_tmp = all_exps[exp]()
-            if exp_tmp.dl[cmb] is not None:
+            if exp_tmp.dl_err[cmb] is not None:
                 # ugh...
                 if np.atleast_2d(np.asarray(exp_tmp.dl_err[cmb])).shape[0] == 1:
                     detbins = exp_tmp.dl[cmb]/exp_tmp.dl_err[cmb] > sigma_det[cmb]
@@ -176,14 +204,26 @@ def make_plot(exps, cmbs=['TT','EE','BB'],
                 if cmb == 'TE': detbins = np.ones_like(detbins, dtype=bool)
 
                 # detections
+                xerr = (exp_tmp.l_hi[cmb]-exp_tmp.l_lo[cmb])[detbins]/2.0 if (plot_xerr and exp_tmp.l_lo[cmb] is not None) else None
                 if np.atleast_2d(np.asarray(exp_tmp.dl_err[cmb])).shape[0] == 1:
-                    axR.errorbar(exp_tmp.l[cmb][detbins], exp_tmp.dl[cmb][detbins], yerr=exp_tmp.dl_err[cmb][detbins], fmt='.', elinewidth=error_lw, color=exp_tmp.color, ms=datams)
-                    axL.errorbar(exp_tmp.l[cmb][detbins], exp_tmp.dl[cmb][detbins], yerr=exp_tmp.dl_err[cmb][detbins], fmt='.', elinewidth=error_lw, color=exp_tmp.color, ms=datams)
+                    errorbars_on_axes(axlist, exp_tmp.l[cmb][detbins],
+                        exp_tmp.dl[cmb][detbins],
+                        yerr=exp_tmp.dl_err[cmb][detbins], 
+                        xerr=xerr, 
+                        fmt='.',
+                        elinewidth=error_lw, color=exp_tmp.color, ms=datams)
                 else:
-                    axR.errorbar(exp_tmp.l[cmb][detbins], exp_tmp.dl[cmb][detbins], yerr=[exp_tmp.dl_err[cmb][0][detbins],exp_tmp.dl_err[cmb][1][detbins]], fmt='.', elinewidth=error_lw, color=exp_tmp.color, ms=datams)
-                    axL.errorbar(exp_tmp.l[cmb][detbins], exp_tmp.dl[cmb][detbins], yerr=[exp_tmp.dl_err[cmb][0][detbins],exp_tmp.dl_err[cmb][1][detbins]], fmt='.', elinewidth=error_lw, color=exp_tmp.color, ms=datams)
-                
+                    errorbars_on_axes(axlist, exp_tmp.l[cmb][detbins], exp_tmp.dl[cmb][detbins], 
+                                     yerr=[exp_tmp.dl_err[cmb][0][detbins],exp_tmp.dl_err[cmb][1][detbins]], 
+                                     xerr=xerr,
+                                     fmt='.', elinewidth=error_lw, color=exp_tmp.color, ms=datams)
+
+
                 # non-detections
-                axR.errorbar(exp_tmp.l[cmb][~detbins], exp_tmp.dl[cmb][~detbins]*nsigma[cmb], yerr=0, fmt='v', ms=upperlimitms, elinewidth=error_lw, color=exp_tmp.color)
-                axL.errorbar(exp_tmp.l[cmb][~detbins], exp_tmp.dl[cmb][~detbins]*nsigma[cmb], yerr=0, fmt='v', ms=upperlimitms, elinewidth=error_lw, color=exp_tmp.color)
+                xerr = (exp_tmp.l_hi[cmb]-exp_tmp.l_lo[cmb])[~detbins]/2.0 if (plot_xerr and exp_tmp.l_lo[cmb] is not None) else None
+                errorbars_on_axes(axlist, exp_tmp.l[cmb][~detbins], exp_tmp.dl[cmb][~detbins]*nsigma[cmb], 
+                                yerr=0, xerr=xerr, fmt='v', ms=upperlimitms, elinewidth=error_lw, color=exp_tmp.color)
+
+
+
 
