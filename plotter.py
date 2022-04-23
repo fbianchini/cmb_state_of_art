@@ -327,6 +327,7 @@ def make_PBDR_BB_plot():
                datams=5, upperlimitms=3,
                )
 
+    #angular scale, top x ticks (consider moving to make_plot())
     ax2 = axMain.twiny()
     ax2.plot([0,0],[1e-6,20000])
     ax2.set_xlim(axMain.get_xlim())
