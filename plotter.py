@@ -36,7 +36,7 @@ def make_plot(exps, cmbs=['TT','EE','BB'],
               nsigma={'TT':2,'EE':2,'BB':3,'TE':0}, sigma_det={'%s'%cmb:1 for cmb in experiments.cmbs}, 
               theory='camb',
               lsep=200, datams=4, upperlimitms=4, error_lw=0.5, txtsize=12,
-              plot_xerr = False,
+              plot_xerr=False,
               theorycolor={'%s'%cmb:'grey' for cmb in experiments.cmbs}, 
               theorylw={'%s'%cmb:0.7 for cmb in experiments.cmbs}, 
               theoryls={'%s'%cmb:'-' for cmb in experiments.cmbs}, 
@@ -125,6 +125,7 @@ def make_plot(exps, cmbs=['TT','EE','BB'],
             l_th = np.arange(dl_lens['TT'].size)
         except:
             l_th, dl_lens['TT'], dl_lens['EE'], dl_lens['BB'] = np.loadtxt('data/COM_PowerSpect_CMB-base-plikHM-TTTEEE-lowl-lowE-lensing-minimum-theory_R3.01.txt', unpack = 1, usecols = (0, 1, 3, 4))
+            dl_tens['BB'] = np.zeros_like(dl_lens['TT'])
     elif theory == 'fromfile':
         l_th, dl_lens['TT'], dl_lens['EE'], dl_lens['BB'] = np.loadtxt('data/COM_PowerSpect_CMB-base-plikHM-TTTEEE-lowl-lowE-lensing-minimum-theory_R3.01.txt', unpack = 1, usecols = (0, 1, 3, 4))
         dl_tens['BB'] = np.zeros_like(dl_lens['TT'])
@@ -194,7 +195,7 @@ def make_plot(exps, cmbs=['TT','EE','BB'],
     if 'plot_all_theory' in kwargs:
         cmbth = ['TT','EE','BB']
     else:
-        cmbth = cmbs
+        cmbth = np.atleast_1d(cmbs)
 
     for cmb in cmbth:
         plot_on_axes(axlist, l_th, dl_lens[cmb], color=theorycolor[cmb],
