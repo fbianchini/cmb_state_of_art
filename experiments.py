@@ -49,12 +49,20 @@ class SPT3G(Experiment):
         self.l_lo['TE'], self.l_hi['TE'], self.l['TE'], self.dl['TE'], self.dl_err['TE'] = np.loadtxt('data/bp_for_plotting_v3.txt', unpack=1, usecols=[0,1,2,3,4])
         self.l_lo['EE'], self.l_hi['EE'], self.l['EE'], self.dl['EE'], self.dl_err['EE'] = np.loadtxt('data/bp_for_plotting_v3.txt', unpack=1, usecols=[0,1,5,6,7])
         
-class ACTpol(Experiment):
+class ACTpol_DR4(Experiment):
     def __init__(self, telescope='ACT', exp_type='ground', color='#b3074f'):
         super().__init__(telescope, exp_type, color)
 
         for cmb in ['TT','EE','TE']:
             self.l[cmb], self.dl[cmb], self.dl_err[cmb] = np.loadtxt('data/cmbonly_spectra_dr4.01/act_dr4.01_D_ell_%s_cmbonly.txt'%cmb,unpack=1)
+        #from table 9 of 2007.07289
+        self.l_lo['BB'] = np.array([300, 651, 1001, 1401, 2801])
+        self.l_hi['BB'] = np.array([650, 1000, 1400, 2800, 4000])
+        self.l['BB']  = np.array([475, 825.5, 1200.5, 2100.5, 3400.5])
+        self.dl['BB'] = np.array([0.090, 0.029, 0.094, -0.113, -0.30])
+        self.dl_err['BB'] = np.array([0.043, 0.057, 0.073, 0.092, 0.24])
+
+
 
 class POLARBEAR17(Experiment):
     def __init__(self, telescope='POLARBEAR', exp_type='ground', color='#33673B'):
